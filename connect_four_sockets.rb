@@ -6,7 +6,7 @@ class ConnectFour #should this be module?
     attr_reader :turns
 
     def initialize
-      @grid = Array.new(7){Array.new}
+      @grid = Array.new(7) { [] }
       @turns = 0
     end
 
@@ -16,16 +16,16 @@ class ConnectFour #should this be module?
         @grid.each do |col|
           display_string << "|".blue
           if col.size < h + 1
-              display_string<< "   "
+            display_string<< "   "
           elsif col[h] == "1"
-              display_string<< " @ ".red
+            display_string<< " @ ".red
           else
-              display_string<< " @ ".black
+            display_string<< " @ ".black
           end
-        end 
+        end
         display_string<< ("|\n"+"+---"*7+"+\n").blue
       end
-      display_string<<"  1   2   3   4   5   6   7\n"
+      display_string<< "  1   2   3   4   5   6   7\n"
     end
 
     def make_move(move,mark)
@@ -75,13 +75,3 @@ class ConnectFour #should this be module?
   end # class Board
 
 end
-
-
-
-
-
-
-
-
-
-

@@ -11,15 +11,15 @@ class Client
   def run
     loop do
       message = @connection.gets.chomp
-  
+
       if message == "GET"
         move = gets.chomp
         @connection.puts(move)
       else
         puts message
       end
-      end
-      
+    end
+
   end
 
 
@@ -28,4 +28,3 @@ end
 client = Client.new('localhost', 4481)
 
 client.run
-

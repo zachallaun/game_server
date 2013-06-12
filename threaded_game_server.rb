@@ -77,7 +77,7 @@ class Game
 
   def get_move
     @inactive_player.conn.puts("Waiting for #{@active_player.name} to make a move.")
-    begin 
+    begin
       @active_player.conn.puts("#{@active_player.name}, it's your turn.  Make a move.")
       @active_player.conn.puts("GET")
       move = @active_player.conn.gets.chomp.to_i
@@ -110,13 +110,13 @@ class Game
       tell_both("It's a draw.")
     else
       @inactive_player.conn.puts("#{inactive_player.name}, you win!")
-      @active_player.conn.puts("Sorry, #{active_player.name}, you lost.") 
+      @active_player.conn.puts("Sorry, #{active_player.name}, you lost.")
     end
     @inplay = false
   end
 end
 
-  
+
 
 class Server
 
@@ -150,7 +150,7 @@ class Server
       #level = conn.gets.chomp.to_i
       new_game = Game.new(game_choice,new_player) #initialize game with computer player, too
       @games << new_game
-      game_in_play(new_game)  
+      game_in_play(new_game)
 
     else #wait for second player
       new_game = Game.new(game_choice,new_player) #initialize game with computer player, too
@@ -160,7 +160,7 @@ class Server
   end
 
   def game_in_play(current_game)
-    @thread_list << Thread.new do 
+    @thread_list << Thread.new do
       current_game.tell_both(current_game.starting_state)
       current_game.tell_both(current_game.display)
       begin
@@ -175,7 +175,7 @@ class Server
 
   def select_game(conn, name)
     conn.puts("Your choices are: ")
-    choices = @games.find_all {|g| !g.inplay } 
+    choices = @games.find_all {|g| !g.inplay }
     choices.each_with_index do |game, i|
       conn.puts("#{i+1})  #{game.active_player.name} is waiting to play #{game.name}")
     end
@@ -187,15 +187,15 @@ class Server
       start_new_game(conn, name)
     else
       #@game_lock.synchronize do# need to somehow lock the choices, currently 2 people can join the same game -- kicks original player out
-        current_game = choices[game_choice-1]
-        if current_game.inplay
-          conn.puts "Sorry, that game was just taken."
-          select_game(conn,name)
-        else
+      current_game = choices[game_choice-1]
+      if current_game.inplay
+        conn.puts "Sorry, that game was just taken."
+        select_game(conn,name)
+      else
         new_player = Player.new(conn,name,2)
         current_game.active_player.conn.puts("#{new_player.name} will be joining you.")
         current_game.add_player(new_player)
-        end
+      end
       #end # end synchronize / Mutex doesn't work (? because it never gets to end of if/else & unlocks ?)
       game_in_play(current_game)
     end
@@ -209,16 +209,16 @@ class Server
           conn.puts("What is your name?")
           conn.puts("GET")
           name = conn.gets.chomp.capitalize
-            if @games == [] || @games.all? {|g| g.inplay} 
-              start_new_game(conn,name)
-            else
-              select_game(conn,name)
-            end
+          if @games == [] || @games.all? {|g| g.inplay}
+            start_new_game(conn,name)
+          else
+            select_game(conn,name)
           end
+        end
       end
     end
     @thread_list.each {|thr| thr.join}
-  end #run          
+  end #run
 end #server class
 
 
@@ -226,7 +226,3 @@ end #server class
 server = Server.new(4481)
 p server
 server.run
-
-
-
-      
