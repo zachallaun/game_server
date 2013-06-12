@@ -10,22 +10,32 @@ class ConnectFour #should this be module?
       @turns = 0
     end
 
-    def display
-      display_string= ("+---"*7+"+\n").blue
-      5.downto(0) do |h|
-        @grid.each do |col|
-          display_string << "|".blue
-          if col.size < h + 1
-            display_string<< "   "
-          elsif col[h] == "1"
-            display_string<< " @ ".red
-          else
-            display_string<< " @ ".black
-          end
+    def row(i)
+      @grid.map { |col| col[i] }
+    end
+
+    def rows
+      5.downto(0).map { |i| row(i) }
+    end
+
+    def display_row(row)
+      s = row.map do |cell|
+        if cell.nil?
+          "   "
+        elsif cell == "1"
+          " @ ".red
+        else
+          " @ ".black
         end
-        display_string<< ("|\n"+"+---"*7+"+\n").blue
       end
-      display_string<< "  1   2   3   4   5   6   7\n"
+      "|".blue + s.join("|".blue) + "|".blue
+    end
+
+    def display
+      row_sep = ("+---"*7+"+").blue
+      rows_string = rows.map { |r| display_row(r) + "\n" }.join(row_sep + "\n")
+      legend = "  1   2   3   4   5   6   7"
+      row_sep + "\n" + rows_string + "\n" + row_sep + "\n" + legend + "\n"
     end
 
     def make_move(move,mark)
