@@ -6,6 +6,7 @@ require_relative 'tic_tac_toe_sockets'
 # Server to allow multiple games of Connect Four and TicTacToe
 # Currently 2 player only.  Play against computer to be implemented
 # run 'connect_four_client.rb' to connect
+# need to deal with end of game - play again or disconnect
 
 
 
@@ -124,6 +125,7 @@ class Server
     puts "Server initialized on port #{port}"
     @games = []
     @thread_list = []
+    @game_lock = Mutex.new
   end
 
   def start_new_game(conn, name)
@@ -143,6 +145,9 @@ class Server
     end until player_choice == "C" || player_choice == "W"
 
     if player_choice == "C"
+      #conn.puts("Do you want an easy(1), medium(2), or hard(3) game?")
+      #conn.puts("GET")
+      #level = conn.gets.chomp.to_i
       new_game = Game.new(game_choice,new_player) #initialize game with computer player, too
       @games << new_game
       game_in_play(new_game)  
@@ -169,7 +174,7 @@ class Server
 
 
   def select_game(conn, name)
-    conn.puts(" Your choices are: ")
+    conn.puts("Your choices are: ")
     choices = @games.find_all {|g| !g.inplay } 
     choices.each_with_index do |game, i|
       conn.puts("#{i+1})  #{game.active_player.name} is waiting to play #{game.name}")
@@ -181,30 +186,37 @@ class Server
     if game_choice > choices.size
       start_new_game(conn, name)
     else
-      current_game = choices[game_choice-1]
-      new_player = Player.new(conn,name,2)
-      current_game.active_player.conn.puts("#{new_player.name} will be joining you.")
-      current_game.add_player(new_player)
+      #@game_lock.synchronize do# need to somehow lock the choices, currently 2 people can join the same game -- kicks original player out
+        current_game = choices[game_choice-1]
+        if current_game.inplay
+          conn.puts "Sorry, that game was just taken."
+          select_game(conn,name)
+        else
+        new_player = Player.new(conn,name,2)
+        current_game.active_player.conn.puts("#{new_player.name} will be joining you.")
+        current_game.add_player(new_player)
+        end
+      #end # end synchronize / Mutex doesn't work (? because it never gets to end of if/else & unlocks ?)
       game_in_play(current_game)
     end
   end
 
   def run
-    main_thread = Thread.new do
+    @thread_list << Thread.new do
       Socket.accept_loop(@control_socket) do |conn|
-        # this part needs to be put into threads.  Currently blocks
-        conn.puts("Welcome.")
-        conn.puts("What is your name?")
-        conn.puts("GET")
-        name = conn.gets.chomp.capitalize
-          if @games == [] || @games.all? {|g| g.inplay} 
-            start_new_game(conn,name)
-          else
-            select_game(conn,name)
+        @thread_list << Thread.new do
+          conn.puts("Welcome.")
+          conn.puts("What is your name?")
+          conn.puts("GET")
+          name = conn.gets.chomp.capitalize
+            if @games == [] || @games.all? {|g| g.inplay} 
+              start_new_game(conn,name)
+            else
+              select_game(conn,name)
+            end
           end
       end
     end
-    @thread_list << main_thread
     @thread_list.each {|thr| thr.join}
   end #run          
 end #server class
