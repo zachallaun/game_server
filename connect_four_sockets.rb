@@ -18,6 +18,33 @@ class ConnectFour #should this be module?
       5.downto(0).map { |i| row(i) }
     end
 
+    def col(i)
+      @grid[i]
+    end
+
+    def cols
+      @grid
+    end
+
+    def cell(col_i, row_i)
+      column = col(col_i)
+      column && column[row_i]
+    end
+
+    def diagonals_from(col_i, row_i)
+      diag_left  = []
+      diag_right = []
+
+      (0..5).each do |row_offset|
+        col1_i = (col_i + row_i) - row_offset
+        col2_i = (col_i - row_i) + row_offset
+        diag_left.push  cell(col1_i, row_offset) if col1_i >= 0 && col1_i <= 6
+        diag_right.push cell(col2_i, row_offset) if col2_i >= 0 && col2_i <= 6
+      end
+
+      [diag_left, diag_right]
+    end
+
     def display_row(row)
       s = row.map do |cell|
         if cell.nil?
@@ -35,7 +62,7 @@ class ConnectFour #should this be module?
       row_sep = ("+---"*7+"+").blue
       rows_string = rows.map { |r| display_row(r) + "\n" }.join(row_sep + "\n")
       legend = "  1   2   3   4   5   6   7"
-      row_sep + "\n" + rows_string + "\n" + row_sep + "\n" + legend + "\n"
+      row_sep + "\n" + rows_string + row_sep + "\n" + legend + "\n"
     end
 
     def make_move(move,mark)
@@ -49,36 +76,32 @@ class ConnectFour #should this be module?
     end
 
     def game_over?
-      return false if @turns < 7
-      col = @last_move.first
-      color = @last_move.last
-      row = @grid[col].size-1
+      col_i, color = @last_move
+      last_col = col(col_i)
 
-      col_string = @grid[col].join
-      return true if col_string.match(color*4)
+      row_i = last_col.size - 1
+      last_row = row(row_i)
 
-      row_string = @grid.inject(""){|memo,c| memo.concat(c[row] || " ")}
-      return true if row_string.match(color*4)
+      diag_left, diag_right = diagonals_from(col_i, row_i)
 
-      diag1_string = ""
-      diag2_string = ""
-      (0..5).each do |r|
-        col1 = r + (col-row)
-        col2 = r + (col + row)
-        diag1_string.concat(@grid[col1][r] || " ") if col1 >= 0 && col1 <=6
-        diag2_string.concat(@grid[col2][r] || " ") if col2 >= 0 && col2 <=6
+      [last_col, last_row, diag_left, diag_right].each do |line|
+        return true if nils_to_spaces(line).join.match(color * 4)
       end
-      return true if diag1_string.match(color*4) || diag2_string.match(color*4)
 
       if @turns == 42
-        @turns +=1
-        return true
+        @turns +=1 and return true
       end
       false
     end
 
     def draw?
       @turns > 42
+    end
+
+    private
+
+    def nils_to_spaces(arr)
+      arr.map { |elem| elem || " " }
     end
 
   end # class Board
