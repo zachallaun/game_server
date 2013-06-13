@@ -45,8 +45,7 @@ class ConnectFour #should this be module?
     end
 
     def valid?(move)
-      return false if move < 1 || move > 7 || @grid[move-1].size >=6
-      true
+      !(move < 1 || move > 7 || @grid[move-1].size >= 6)
     end
 
     def game_over?
